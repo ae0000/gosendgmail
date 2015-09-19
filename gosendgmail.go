@@ -2,6 +2,8 @@ package gosendgmail
 
 import (
 	"errors"
+	"fmt"
+	"log"
 	"net/smtp"
 )
 
@@ -35,29 +37,43 @@ func (g *Gmail) WeOK() error {
 
 // Send an email, like this:
 //     g.Send([]string("blah@blah"), "Message")
-func (g *Gmail) Send(to []string, msg string) error {
+func (g *Gmail) Send(to []string, subject, msg string) error {
 	// Check we have what we need
 	if err := g.WeOK(); err != nil {
 		return err
 	}
 
-	auth := smtp.PlainAuth(
-		"",
-		g.Address,
-		g.Password,
-		g.SMTP,
-	)
+	body := "To: " + to[0] + "\r\nSubject: " + subject + "\r\n\r\n" + msg
+	auth := smtp.PlainAuth("", g.Address, g.Password, "smtp.gmail.com")
+	err := smtp.SendMail("smtp.gmail.com:587", auth, g.Address,
+		to, []byte(body))
+	if err != nil {
+		fmt.Printf("FF err %+v ", err)
+		fmt.Println("   ")
+		log.Fatal(err)
+	}
+	//
+	// auth := smtp.PlainAuth(
+	// 	"",
+	// 	g.Address,
+	// 	g.Password,
+	// 	g.SMTP,
+	// )
+	//
+	// //  sender := "fromwho@gmail.com" // change here
+	//
+	// // send out the email
+	// err := smtp.SendMail(
+	// 	g.SMTP+":"+g.Port,
+	// 	auth,
+	// 	g.Address,
+	// 	to,
+	// 	[]byte(msg),
+	// )
 
-	//  sender := "fromwho@gmail.com" // change here
-
-	// send out the email
-	err := smtp.SendMail(
-		g.SMTP+":"+g.Port,
-		auth,
-		g.Address,
-		to,
-		[]byte(msg),
-	)
+	if err != nil {
+		fmt.Println("gosendemail ERROR: ", err)
+	}
 
 	return err
 }
